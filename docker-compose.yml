@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  pki-app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - SESSION_SECRET=your-secret-key-change-in-production
+      - DATABASE_URL=sqlite:///app/instance/pki_app.db
+      - FLASK_ENV=production
+    volumes:
+      - ./instance:/app/instance
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add a reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - pki-app
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  pki_data:
+    driver: local
