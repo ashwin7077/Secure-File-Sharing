@@ -25,6 +25,53 @@
                         </div>
                     </div>
                     
+                    <div class="card border-primary mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i data-feather="share-2" class="me-2"></i>Share with Recipient (Optional)
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="recipient_email" class="form-label">
+                                    <i data-feather="mail" class="me-1"></i>Recipient Email
+                                </label>
+                                <input type="email" class="form-control" id="recipient_email" name="recipient_email" 
+                                       placeholder="user@example.com">
+                                <div class="form-text">
+                                    Leave empty to upload without sharing. You can share later from the documents page.
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="max_downloads" class="form-label">
+                                        <i data-feather="download" class="me-1"></i>Download Limit
+                                    </label>
+                                    <select class="form-select" id="max_downloads" name="max_downloads">
+                                        <option value="1">1 download</option>
+                                        <option value="3">3 downloads</option>
+                                        <option value="5" selected>5 downloads</option>
+                                        <option value="10">10 downloads</option>
+                                        <option value="20">20 downloads</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="expiry_hours" class="form-label">
+                                        <i data-feather="clock" class="me-1"></i>Link Expires
+                                    </label>
+                                    <select class="form-select" id="expiry_hours" name="expiry_hours">
+                                        <option value="24">24 hours</option>
+                                        <option value="72">3 days</option>
+                                        <option value="168" selected>7 days</option>
+                                        <option value="336">14 days</option>
+                                        <option value="720">30 days</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="alert alert-info border-0" role="alert">
                         <i data-feather="info" class="me-2"></i>
                         <strong>What happens after upload:</strong>

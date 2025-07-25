@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Share Created - PKI File Sharing System{% endblock %}
+{% block title %}Upload Successful - PKI File Sharing System{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -8,7 +8,7 @@
         <div class="card border-0 shadow">
             <div class="card-header bg-success text-white text-center py-4">
                 <i data-feather="check-circle" style="width: 64px; height: 64px;" class="mb-3"></i>
-                <h3 class="mb-0">Share Link Created Successfully!</h3>
+                <h3 class="mb-0">Upload and Share Successful!</h3>
             </div>
             <div class="card-body p-4">
                 <!-- Document Info -->
@@ -17,7 +17,10 @@
                         <i data-feather="file-text" class="me-3" style="width: 32px; height: 32px;"></i>
                         <div>
                             <h6 class="mb-1">{{ document.original_filename }}</h6>
-                            <small class="text-muted">Shared with: {{ share_link.shared_with_email }}</small>
+                            <small class="text-muted">
+                                Size: {{ "%.2f"|format(document.file_size / 1024) }} KB | 
+                                Shared with: {{ recipient_email }}
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -33,19 +36,7 @@
                             <i data-feather="copy" class="me-1"></i>Copy
                         </button>
                     </div>
-                    <div class="form-text">Send this URL to {{ share_link.shared_with_email }}</div>
-                </div>
-
-                <!-- Share Details -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <h6><i data-feather="clock" class="me-2"></i>Expiration</h6>
-                        <p class="text-muted">{{ share_link.expires_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6><i data-feather="download" class="me-2"></i>Download Limit</h6>
-                        <p class="text-muted">{{ share_link.max_downloads }} downloads maximum</p>
-                    </div>
+                    <div class="form-text">Send this URL to {{ recipient_email }}</div>
                 </div>
 
                 <!-- Security Features -->
@@ -73,32 +64,48 @@
 
                 <!-- Action Buttons -->
                 <div class="d-grid gap-2">
-                    <a href="{{ url_for('my_shares') }}" class="btn btn-primary">
-                        <i data-feather="list" class="me-2"></i>
-                        Manage All Shares
+                    <a href="{{ url_for('documents') }}" class="btn btn-primary">
+                        <i data-feather="file-text" class="me-2"></i>View All Documents
                     </a>
-                    <a href="{{ url_for('documents') }}" class="btn btn-outline-secondary">
-                        <i data-feather="arrow-left" class="me-2"></i>
-                        Back to Documents
+                    <a href="{{ url_for('my_shares') }}" class="btn btn-outline-secondary">
+                        <i data-feather="share-2" class="me-2"></i>Manage Shares
+                    </a>
+                    <a href="{{ url_for('upload') }}" class="btn btn-outline-info">
+                        <i data-feather="upload" class="me-2"></i>Upload Another Document
                     </a>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- Instructions -->
-        <div class="card mt-4 border-0">
+<!-- Help Card -->
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0">
             <div class="card-body">
                 <h6 class="card-title">
-                    <i data-feather="info" class="me-2 text-info"></i>
+                    <i data-feather="help-circle" class="me-2 text-info"></i>
                     Next Steps
                 </h6>
-                <ol class="mb-0">
-                    <li>Copy the share URL above</li>
-                    <li>Send it to {{ share_link.shared_with_email }} via secure communication</li>
-                    <li>The recipient can download the file using the URL</li>
-                    <li>Monitor download activity in "Manage All Shares"</li>
-                    <li>Revoke access anytime if needed</li>
-                </ol>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i data-feather="mail" class="me-2 text-primary"></i>
+                        <strong>Send the share URL to {{ recipient_email }}</strong>
+                    </li>
+                    <li class="mb-2">
+                        <i data-feather="edit-3" class="me-2 text-success"></i>
+                        <strong>Digitally sign the document</strong> to verify authenticity
+                    </li>
+                    <li class="mb-2">
+                        <i data-feather="bell" class="me-2 text-warning"></i>
+                        <strong>Monitor notifications</strong> when the document is downloaded
+                    </li>
+                    <li>
+                        <i data-feather="shield-check" class="me-2 text-info"></i>
+                        <strong>View verification status</strong> and track all activity
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
@@ -128,6 +135,24 @@
                     feather.replace();
                 }, 2000);
                 
+                // Show success message
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show mt-2';
+                alert.innerHTML = `
+                    <i data-feather="check-circle" class="me-2"></i>
+                    Share URL copied to clipboard! Send it to {{ recipient_email }}.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                shareUrl.parentNode.parentNode.appendChild(alert);
+                feather.replace();
+                
+                // Auto-dismiss after 5 seconds
+                setTimeout(function() {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                }, 5000);
+                
             }).catch(function(err) {
                 // Fallback for older browsers
                 shareUrl.select();
@@ -147,10 +172,20 @@
             });
         } catch (err) {
             console.error('Failed to copy: ', err);
-            alert('Please copy the URL manually by selecting and copying the text.');
+            // Show error message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-warning alert-dismissible fade show mt-2';
+            alert.innerHTML = `
+                <i data-feather="alert-triangle" class="me-2"></i>
+                Please copy the URL manually by selecting and copying the text.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            shareUrl.parentNode.parentNode.appendChild(alert);
+            feather.replace();
         }
     }
     
+    // Initialize feather icons
     feather.replace();
 </script>
 {% endblock %}

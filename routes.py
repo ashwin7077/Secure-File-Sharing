@@ -31,16 +31,54 @@ def register():
                 flash('All fields are required.', 'error')
                 return render_template('register.html')
             
+            # Username validation
+            if len(username.strip()) < 3:
+                flash('Username must be at least 3 characters long.', 'error')
+                return render_template('register.html')
+            
+            if not username.replace('_', '').replace('-', '').isalnum():
+                flash('Username can only contain letters, numbers, hyphens, and underscores.', 'error')
+                return render_template('register.html')
+            
+            # Email validation
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email.strip()):
+                flash('Please enter a valid email address.', 'error')
+                return render_template('register.html')
+            
+            # Password strength validation
+            if len(password) < 8:
+                flash('Password must be at least 8 characters long.', 'error')
+                return render_template('register.html')
+            
+            if not any(c.isupper() for c in password):
+                flash('Password must contain at least one uppercase letter.', 'error')
+                return render_template('register.html')
+            
+            if not any(c.islower() for c in password):
+                flash('Password must contain at least one lowercase letter.', 'error')
+                return render_template('register.html')
+            
+            if not any(c.isdigit() for c in password):
+                flash('Password must contain at least one number.', 'error')
+                return render_template('register.html')
+            
+            if not any(c in '!@#$%^&*()_+-=[]{}|;:,.<>?' for c in password):
+                flash('Password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?).', 'error')
+                return render_template('register.html')
+            
             if password != confirm_password:
                 flash('Passwords do not match.', 'error')
                 return render_template('register.html')
             
-            if User.query.filter_by(username=username).first():
-                flash('Username already exists.', 'error')
+            # Check if user already exists (case-insensitive)
+            if User.query.filter(User.username.ilike(username.strip())).first():
+                flash('Username already exists. Please choose a different username.', 'error')
                 return render_template('register.html')
             
-            if User.query.filter_by(email=email).first():
-                flash('Email already registered.', 'error')
+            if User.query.filter(User.email.ilike(email.strip())).first():
+                flash('Email already registered. Please use a different email or try logging in.', 'error')
                 return render_template('register.html')
             
             # Generate key pair
@@ -49,10 +87,10 @@ def register():
             # Create certificate
             certificate_pem = PKIManager.create_certificate(username, email, public_key_pem)
             
-            # Create user
+            # Create user (strip whitespace)
             user = User(
-                username=username,
-                email=email,
+                username=username.strip(),
+                email=email.strip().lower(),
                 password_hash=generate_password_hash(password),
                 private_key_pem=private_key_pem,
                 public_key_pem=public_key_pem,
@@ -83,7 +121,7 @@ def login():
                 flash('Username and password are required.', 'error')
                 return render_template('login.html')
             
-            user = User.query.filter_by(username=username).first()
+            user = User.query.filter(User.username.ilike(username.strip())).first()
             
             if user and check_password_hash(user.password_hash, password):
                 # Verify certificate is still valid
@@ -144,6 +182,19 @@ def upload():
                 flash('No file selected.', 'error')
                 return render_template('upload.html')
             
+            # Get recipient email and sharing options
+            recipient_email = request.form.get('recipient_email', '').strip()
+            max_downloads = int(request.form.get('max_downloads', 5))
+            expiry_hours = int(request.form.get('expiry_hours', 168))  # Default 7 days
+            
+            # Validate recipient email if provided
+            if recipient_email:
+                import re
+                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                if not re.match(email_pattern, recipient_email):
+                    flash('Please enter a valid recipient email address.', 'error')
+                    return render_template('upload.html')
+            
             if file:
                 # Secure filename
                 original_filename = file.filename
@@ -168,10 +219,62 @@ def upload():
                 )
                 
                 db.session.add(document)
+                db.session.flush()  # Get document ID
+                
+                # Create share link if recipient is provided
+                share_url = None
+                if recipient_email:
+                    share_token = secrets.token_urlsafe(32)
+                    expires_at = datetime.utcnow() + timedelta(hours=expiry_hours)
+                    
+                    share_link = ShareLink(
+                        document_id=document.id,
+                        shared_by_id=current_user.id,
+                        shared_with_email=recipient_email.lower(),
+                        share_token=share_token,
+                        expires_at=expires_at,
+                        max_downloads=max_downloads
+                    )
+                    
+                    db.session.add(share_link)
+                    
+                    # Create notifications
+                    sender_notification = Notification(
+                        user_id=current_user.id,
+                        title="Document Uploaded and Shared",
+                        message=f"'{original_filename}' uploaded and shared with {recipient_email}",
+                        notification_type="share",
+                        document_id=document.id,
+                        share_link_id=share_link.id
+                    )
+                    db.session.add(sender_notification)
+                    
+                    # Try to find recipient user
+                    recipient_user = User.query.filter(User.email.ilike(recipient_email)).first()
+                    if recipient_user:
+                        recipient_notification = Notification(
+                            user_id=recipient_user.id,
+                            title="New Document Shared With You",
+                            message=f"{current_user.username} shared '{original_filename}' with you",
+                            notification_type="share",
+                            document_id=document.id,
+                            share_link_id=share_link.id
+                        )
+                        db.session.add(recipient_notification)
+                    
+                    share_url = url_for('shared_download', token=share_token, _external=True)
+                
                 db.session.commit()
                 
-                flash('File uploaded successfully!', 'success')
-                return redirect(url_for('dashboard'))
+                if share_url:
+                    flash(f'File uploaded and shared successfully! Share URL: {share_url}', 'success')
+                    return render_template('upload_success.html', 
+                                         document=document, 
+                                         share_url=share_url,
+                                         recipient_email=recipient_email)
+                else:
+                    flash('File uploaded successfully! You can share it from the documents page.', 'success')
+                    return redirect(url_for('documents'))
                 
         except Exception as e:
             logger.error(f"Upload error: {str(e)}")
