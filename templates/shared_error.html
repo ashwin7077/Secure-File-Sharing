@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Error - PKI File Sharing System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .error-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card error-card border-0 shadow-lg">
+                    <div class="card-header bg-danger text-white text-center py-4">
+                        <i data-feather="x-circle" style="width: 64px; height: 64px;" class="mb-3"></i>
+                        <h3 class="mb-0">Access Denied</h3>
+                        <p class="mb-0 mt-2 opacity-75">Shared document unavailable</p>
+                    </div>
+                    <div class="card-body p-4 text-center">
+                        <div class="mb-4">
+                            <i data-feather="alert-triangle" style="width: 48px; height: 48px;" class="text-warning mb-3"></i>
+                            <h5>Unable to Access Document</h5>
+                            <p class="text-muted">{{ error }}</p>
+                        </div>
+
+                        <!-- Common Reasons -->
+                        <div class="alert alert-warning border-0 text-start">
+                            <h6><i data-feather="info" class="me-2"></i>Common Reasons</h6>
+                            <ul class="mb-0 small">
+                                <li>Share link has expired</li>
+                                <li>Download limit has been reached</li>
+                                <li>Share link has been revoked</li>
+                                <li>Invalid or corrupted URL</li>
+                            </ul>
+                        </div>
+
+                        <!-- What to do -->
+                        <div class="alert alert-info border-0 text-start">
+                            <h6><i data-feather="help-circle" class="me-2"></i>What to do</h6>
+                            <ul class="mb-0 small">
+                                <li>Contact the person who shared the file</li>
+                                <li>Request a new share link</li>
+                                <li>Verify the URL is complete and correct</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="card mt-4 error-card border-0">
+                    <div class="card-body text-center">
+                        <h6><i data-feather="shield" class="me-2"></i>PKI File Sharing System</h6>
+                        <p class="small text-muted mb-0">
+                            This security system protects documents with advanced encryption and access controls.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Initialize Feather Icons -->
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>

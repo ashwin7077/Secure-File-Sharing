@@ -1,11 +1,13 @@
 import os
 import uuid
-from flask import render_template, request, redirect, url_for, flash, send_file, jsonify, current_app
+import secrets
+from datetime import datetime, timedelta
+from flask import render_template, request, redirect, url_for, flash, send_file, jsonify, current_app, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app import app, db
-from models import User, Document, DocumentSignature, CertificateAuthority
+from models import User, Document, DocumentSignature, CertificateAuthority, ShareLink
 from crypto_utils import PKIManager
 import logging
 
@@ -310,6 +312,155 @@ def verify_document(doc_id):
         flash('An error occurred while verifying the document.', 'error')
         return redirect(url_for('documents'))
 
+@app.route('/share/<int:doc_id>', methods=['GET', 'POST'])
+@login_required
+def share_document(doc_id):
+    try:
+        document = Document.query.get_or_404(doc_id)
+        
+        # Check if user owns the document
+        if document.owner_id != current_user.id:
+            flash('You can only share your own documents.', 'error')
+            return redirect(url_for('documents'))
+        
+        if request.method == 'POST':
+            email = request.form.get('email')
+            expires_in_hours = int(request.form.get('expires_in_hours', 24))
+            max_downloads = int(request.form.get('max_downloads', 10))
+            
+            if not email:
+                flash('Email address is required.', 'error')
+                return render_template('share.html', document=document)
+            
+            # Generate secure token
+            share_token = secrets.token_urlsafe(32)
+            expires_at = datetime.utcnow() + timedelta(hours=expires_in_hours)
+            
+            # Create share link
+            share_link = ShareLink(
+                document_id=doc_id,
+                shared_by_id=current_user.id,
+                shared_with_email=email,
+                share_token=share_token,
+                expires_at=expires_at,
+                max_downloads=max_downloads
+            )
+            
+            db.session.add(share_link)
+            db.session.commit()
+            
+            # Generate share URL
+            share_url = url_for('shared_download', token=share_token, _external=True)
+            
+            flash(f'Document shared successfully! Share URL: {share_url}', 'success')
+            return render_template('share_success.html', 
+                                 document=document, 
+                                 share_link=share_link,
+                                 share_url=share_url)
+        
+        return render_template('share.html', document=document)
+        
+    except Exception as e:
+        logger.error(f"Document sharing error: {str(e)}")
+        flash('An error occurred while sharing the document.', 'error')
+        return redirect(url_for('documents'))
+
+@app.route('/shared/<token>')
+def shared_download(token):
+    try:
+        share_link = ShareLink.query.filter_by(share_token=token).first()
+        
+        if not share_link:
+            flash('Invalid or expired share link.', 'error')
+            return render_template('shared_error.html', 
+                                 error="Share link not found.")
+        
+        if not share_link.can_download:
+            reason = "expired" if share_link.is_expired else "download limit reached"
+            if not share_link.is_active:
+                reason = "deactivated"
+            
+            flash(f'Share link is {reason}.', 'error')
+            return render_template('shared_error.html', 
+                                 error=f"Share link is {reason}.")
+        
+        # Verify file integrity before sharing
+        document = share_link.document
+        current_hash = PKIManager.calculate_file_hash(document.file_path)
+        if current_hash != document.file_hash:
+            flash('File integrity check failed. Document may have been tampered with.', 'error')
+            return render_template('shared_error.html', 
+                                 error="File integrity verification failed.")
+        
+        # Show download page first
+        return render_template('shared_download.html', 
+                             share_link=share_link,
+                             document=document)
+        
+    except Exception as e:
+        logger.error(f"Shared download error: {str(e)}")
+        return render_template('shared_error.html', 
+                             error="An error occurred while accessing the shared document.")
+
+@app.route('/shared/<token>/download')
+def process_shared_download(token):
+    try:
+        share_link = ShareLink.query.filter_by(share_token=token).first()
+        
+        if not share_link or not share_link.can_download:
+            abort(404)
+        
+        # Increment download count
+        share_link.download_count += 1
+        db.session.commit()
+        
+        document = share_link.document
+        
+        return send_file(
+            document.file_path,
+            as_attachment=True,
+            download_name=document.original_filename,
+            mimetype=document.content_type
+        )
+        
+    except Exception as e:
+        logger.error(f"Shared download processing error: {str(e)}")
+        abort(404)
+
+@app.route('/my-shares')
+@login_required
+def my_shares():
+    try:
+        # Get all share links created by current user
+        share_links = ShareLink.query.filter_by(shared_by_id=current_user.id).order_by(ShareLink.created_at.desc()).all()
+        return render_template('my_shares.html', share_links=share_links)
+    except Exception as e:
+        logger.error(f"My shares error: {str(e)}")
+        flash('An error occurred loading your shares.', 'error')
+        return render_template('my_shares.html', share_links=[])
+
+@app.route('/revoke-share/<int:share_id>', methods=['POST'])
+@login_required
+def revoke_share(share_id):
+    try:
+        share_link = ShareLink.query.get_or_404(share_id)
+        
+        # Check if user owns the share link
+        if share_link.shared_by_id != current_user.id:
+            flash('You can only revoke your own share links.', 'error')
+            return redirect(url_for('my_shares'))
+        
+        share_link.is_active = False
+        db.session.commit()
+        
+        flash('Share link revoked successfully.', 'success')
+        
+    except Exception as e:
+        logger.error(f"Share revocation error: {str(e)}")
+        flash('An error occurred while revoking the share link.', 'error')
+    
+    return redirect(url_for('my_shares'))
+
 @app.route('/certificate/<int:user_id>')
 @login_required
 def view_certificate(user_id):
@@ -318,6 +469,7 @@ def view_certificate(user_id):
         
         # Parse certificate for display
         from cryptography import x509
+        from cryptography.hazmat.backends import default_backend
         cert = x509.load_pem_x509_certificate(
             user.certificate_pem.encode('utf-8'),
             backend=default_backend()

@@ -2,7 +2,15 @@
 
 ## Overview
 
-This is a Flask-based web application that implements a Public Key Infrastructure (PKI) system for secure document sharing. The application allows users to register with auto-generated digital certificates, upload documents, digitally sign them, and verify document authenticity through cryptographic signatures. It's designed as a coursework project demonstrating practical implementation of cryptographic primitives including digital certificates, digital signatures, and asymmetric encryption.
+This is a Flask-based web application that implements a Public Key Infrastructure (PKI) system for secure document sharing. The application allows users to register with auto-generated digital certificates, upload documents, digitally sign them, share documents with specific users through secure URLs, and verify document authenticity through cryptographic signatures. It's designed as a coursework project demonstrating practical implementation of cryptographic primitives including digital certificates, digital signatures, and asymmetric encryption.
+
+## Recent Changes (2025-07-25)
+
+- **Added Secure Document Sharing System**: Users can now share documents with specific recipients through unique, time-limited URLs
+- **Implemented Share Management**: Created comprehensive share link management with expiration, download limits, and revocation
+- **Enhanced Security**: Added file integrity verification before each shared download
+- **Cross-platform Docker Support**: Created Docker Compose configuration with Windows batch files for easy deployment
+- **Database Enhancement**: Added ShareLink model for tracking document sharing with SQLite file-based storage
 
 ## User Preferences
 

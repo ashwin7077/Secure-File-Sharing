@@ -97,7 +97,12 @@
                                                 <i data-feather="download"></i>
                                             </a>
                                             
-                                            {% if current_user.id != doc.owner_id %}
+                                            {% if current_user.id == doc.owner_id %}
+                                                <a href="{{ url_for('share_document', doc_id=doc.id) }}" 
+                                                   class="btn btn-outline-success" title="Share Document">
+                                                    <i data-feather="share-2"></i>
+                                                </a>
+                                            {% else %}
                                                 {% set user_signed = doc.signatures|selectattr('signer_id', 'equalto', current_user.id)|list %}
                                                 {% if not user_signed %}
                                                     <form method="POST" action="{{ url_for('sign_document', doc_id=doc.id) }}" class="d-inline">
@@ -154,6 +159,10 @@
                         <div class="d-flex align-items-center mb-2">
                             <i data-feather="download" class="me-2 text-primary"></i>
                             <small><strong>Download:</strong> Download the document file</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="share-2" class="me-2 text-success"></i>
+                            <small><strong>Share:</strong> Create secure sharing links (owners only)</small>
                         </div>
                         <div class="d-flex align-items-center mb-2">
                             <i data-feather="edit-3" class="me-2 text-success"></i>

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Share Document - PKI File Sharing System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('documents') }}">Documents</a></li>
+                <li class="breadcrumb-item active">Share</li>
+            </ol>
+        </nav>
+        
+        <div class="card border-0 shadow">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h3 class="mb-0">
+                    <i data-feather="share-2" class="me-2"></i>
+                    Share Document
+                </h3>
+                <p class="mb-0 mt-2 opacity-75">Create secure sharing link</p>
+            </div>
+            <div class="card-body p-4">
+                <!-- Document Info -->
+                <div class="alert alert-info border-0 mb-4">
+                    <div class="d-flex align-items-center">
+                        <i data-feather="file-text" class="me-3" style="width: 32px; height: 32px;"></i>
+                        <div>
+                            <h6 class="mb-1">{{ document.original_filename }}</h6>
+                            <small class="text-muted">
+                                Size: {{ "%.2f"|format(document.file_size / 1024) }} KB | 
+                                Uploaded: {{ document.uploaded_at.strftime('%Y-%m-%d') }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <i data-feather="mail" class="me-1"></i>Share with Email
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email" required 
+                               placeholder="Enter recipient's email address">
+                        <div class="form-text">The person you want to share this document with.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="expires_in_hours" class="form-label">
+                            <i data-feather="clock" class="me-1"></i>Link Expires In
+                        </label>
+                        <select class="form-select" id="expires_in_hours" name="expires_in_hours">
+                            <option value="1">1 Hour</option>
+                            <option value="6">6 Hours</option>
+                            <option value="24" selected>24 Hours (1 Day)</option>
+                            <option value="72">72 Hours (3 Days)</option>
+                            <option value="168">1 Week</option>
+                            <option value="720">1 Month</option>
+                        </select>
+                        <div class="form-text">How long the share link will remain active.</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="max_downloads" class="form-label">
+                            <i data-feather="download" class="me-1"></i>Maximum Downloads
+                        </label>
+                        <select class="form-select" id="max_downloads" name="max_downloads">
+                            <option value="1">1 Download</option>
+                            <option value="5">5 Downloads</option>
+                            <option value="10" selected>10 Downloads</option>
+                            <option value="25">25 Downloads</option>
+                            <option value="50">50 Downloads</option>
+                            <option value="100">100 Downloads</option>
+                        </select>
+                        <div class="form-text">Maximum number of times this document can be downloaded.</div>
+                    </div>
+                    
+                    <div class="alert alert-warning border-0" role="alert">
+                        <i data-feather="shield" class="me-2"></i>
+                        <strong>Security Notice:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>A unique, secure URL will be generated for this share</li>
+                            <li>File integrity will be verified before each download</li>
+                            <li>You can revoke access at any time</li>
+                            <li>Download activity will be tracked and logged</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i data-feather="link" class="me-2"></i>
+                            Generate Share Link
+                        </button>
+                        <a href="{{ url_for('documents') }}" class="btn btn-outline-secondary">
+                            <i data-feather="arrow-left" class="me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    feather.replace();
+</script>
+{% endblock %}

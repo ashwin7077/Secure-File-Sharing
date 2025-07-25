@@ -59,3 +59,29 @@ class CertificateAuthority(db.Model):
     public_key_pem = db.Column(db.Text, nullable=False)
     certificate_pem = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class ShareLink(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey('document.id'), nullable=False)
+    shared_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    shared_with_email = db.Column(db.String(120), nullable=False)
+    share_token = db.Column(db.String(64), unique=True, nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    max_downloads = db.Column(db.Integer, default=10)
+    download_count = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    document = db.relationship('Document', backref='share_links')
+    shared_by = db.relationship('User', backref='shared_links')
+    
+    @property
+    def is_expired(self):
+        return datetime.utcnow() > self.expires_at
+    
+    @property
+    def can_download(self):
+        return (self.is_active and 
+                not self.is_expired and 
+                self.download_count < self.max_downloads)

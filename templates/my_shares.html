@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}My Shares - PKI File Sharing System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i data-feather="share-2" class="me-2"></i>
+                My Shared Documents
+            </h2>
+            <a href="{{ url_for('documents') }}" class="btn btn-primary">
+                <i data-feather="plus" class="me-2"></i>Share New Document
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i data-feather="list" class="me-2"></i>
+                        Share Management
+                    </h5>
+                    <span class="badge bg-primary">{{ share_links|length }} active shares</span>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if share_links %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th><i data-feather="file" class="me-1"></i> Document</th>
+                                    <th><i data-feather="mail" class="me-1"></i> Shared With</th>
+                                    <th><i data-feather="calendar" class="me-1"></i> Created</th>
+                                    <th><i data-feather="clock" class="me-1"></i> Expires</th>
+                                    <th><i data-feather="download" class="me-1"></i> Downloads</th>
+                                    <th><i data-feather="activity" class="me-1"></i> Status</th>
+                                    <th><i data-feather="settings" class="me-1"></i> Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for share in share_links %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i data-feather="file-text" class="me-2 text-muted"></i>
+                                            <div>
+                                                <span class="fw-medium">{{ share.document.original_filename }}</span>
+                                                <br><small class="text-muted">{{ "%.2f"|format(share.document.file_size / 1024) }} KB</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i data-feather="user" class="me-2 text-muted"></i>
+                                            {{ share.shared_with_email }}
+                                        </div>
+                                    </td>
+                                    <td>{{ share.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if share.is_expired %}
+                                            <span class="text-danger">
+                                                <i data-feather="x-circle" class="me-1"></i>
+                                                {{ share.expires_at.strftime('%Y-%m-%d %H:%M') }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-success">
+                                                <i data-feather="clock" class="me-1"></i>
+                                                {{ share.expires_at.strftime('%Y-%m-%d %H:%M') }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if share.download_count >= share.max_downloads %}
+                                                <span class="badge bg-danger">
+                                                    {{ share.download_count }} / {{ share.max_downloads }}
+                                                </span>
+                                            {% elif share.download_count > 0 %}
+                                                <span class="badge bg-warning">
+                                                    {{ share.download_count }} / {{ share.max_downloads }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    {{ share.download_count }} / {{ share.max_downloads }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if not share.is_active %}
+                                            <span class="badge bg-danger">
+                                                <i data-feather="x" class="me-1"></i>Revoked
+                                            </span>
+                                        {% elif share.is_expired %}
+                                            <span class="badge bg-warning">
+                                                <i data-feather="clock" class="me-1"></i>Expired
+                                            </span>
+                                        {% elif share.download_count >= share.max_downloads %}
+                                            <span class="badge bg-info">
+                                                <i data-feather="download" class="me-1"></i>Limit Reached
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-success">
+                                                <i data-feather="check" class="me-1"></i>Active
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            {% if share.can_download %}
+                                                <button class="btn btn-outline-primary" title="Copy Share URL" 
+                                                        onclick="copyShareUrl('{{ url_for('shared_download', token=share.share_token, _external=True) }}')">
+                                                    <i data-feather="copy"></i>
+                                                </button>
+                                            {% endif %}
+                                            
+                                            {% if share.is_active and not share.is_expired %}
+                                                <form method="POST" action="{{ url_for('revoke_share', share_id=share.id) }}" class="d-inline">
+                                                    <button type="submit" class="btn btn-outline-danger" 
+                                                            title="Revoke Access"
+                                                            onclick="return confirm('Are you sure you want to revoke this share? The recipient will no longer be able to download the file.')">
+                                                        <i data-feather="x"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i data-feather="share-2" class="text-muted mb-3" style="width: 64px; height: 64px;"></i>
+                        <h5 class="text-muted">No shared documents yet</h5>
+                        <p class="text-muted">Start sharing your documents securely with others.</p>
+                        <a href="{{ url_for('documents') }}" class="btn btn-primary">
+                            <i data-feather="share-2" class="me-2"></i>Share First Document
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+{% if share_links %}
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white border-0">
+            <div class="card-body text-center">
+                <h3>{{ share_links|length }}</h3>
+                <p class="mb-0">Total Shares</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white border-0">
+            <div class="card-body text-center">
+                <h3>{{ share_links|selectattr('is_active')|selectattr('can_download')|list|length }}</h3>
+                <p class="mb-0">Active Shares</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white border-0">
+            <div class="card-body text-center">
+                <h3>{{ share_links|sum(attribute='download_count') }}</h3>
+                <p class="mb-0">Total Downloads</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark border-0">
+            <div class="card-body text-center">
+                <h3>{{ share_links|selectattr('is_expired')|list|length }}</h3>
+                <p class="mb-0">Expired Shares</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Help -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i data-feather="help-circle" class="me-2 text-info"></i>
+                    Share Management Guide
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="copy" class="me-2 text-primary"></i>
+                            <small><strong>Copy URL:</strong> Get the secure share link to send to recipient</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="x" class="me-2 text-danger"></i>
+                            <small><strong>Revoke:</strong> Immediately disable access to the shared document</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="clock" class="me-2 text-warning"></i>
+                            <small><strong>Expiration:</strong> Shares automatically expire at the set time</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="download" class="me-2 text-info"></i>
+                            <small><strong>Download Limit:</strong> Maximum number of downloads allowed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyShareUrl(url) {
+        navigator.clipboard.writeText(url).then(function() {
+            // Visual feedback
+            const button = event.target.closest('button');
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i data-feather="check"></i>';
+            button.classList.remove('btn-outline-primary');
+            button.classList.add('btn-success');
+            
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-primary');
+                feather.replace();
+            }, 2000);
+            
+            // Show notification
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '9999';
+            alert.innerHTML = `
+                <i data-feather="check-circle" class="me-2"></i>
+                Share URL copied to clipboard!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            feather.replace();
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
+            
+        }).catch(function(err) {
+            alert('Failed to copy URL: ' + err);
+        });
+    }
+    
+    feather.replace();
+</script>
+{% endblock %}

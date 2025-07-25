@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Share Created - PKI File Sharing System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-success text-white text-center py-4">
+                <i data-feather="check-circle" style="width: 64px; height: 64px;" class="mb-3"></i>
+                <h3 class="mb-0">Share Link Created Successfully!</h3>
+            </div>
+            <div class="card-body p-4">
+                <!-- Document Info -->
+                <div class="alert alert-info border-0 mb-4">
+                    <div class="d-flex align-items-center">
+                        <i data-feather="file-text" class="me-3" style="width: 32px; height: 32px;"></i>
+                        <div>
+                            <h6 class="mb-1">{{ document.original_filename }}</h6>
+                            <small class="text-muted">Shared with: {{ share_link.shared_with_email }}</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share URL -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i data-feather="link" class="me-1"></i>Secure Share URL
+                    </label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="shareUrl" value="{{ share_url }}" readonly>
+                        <button class="btn btn-outline-primary" type="button" onclick="copyToClipboard()">
+                            <i data-feather="copy" class="me-1"></i>Copy
+                        </button>
+                    </div>
+                    <div class="form-text">Send this URL to {{ share_link.shared_with_email }}</div>
+                </div>
+
+                <!-- Share Details -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6><i data-feather="clock" class="me-2"></i>Expiration</h6>
+                        <p class="text-muted">{{ share_link.expires_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i data-feather="download" class="me-2"></i>Download Limit</h6>
+                        <p class="text-muted">{{ share_link.max_downloads }} downloads maximum</p>
+                    </div>
+                </div>
+
+                <!-- Security Features -->
+                <div class="alert alert-success border-0 mb-4">
+                    <h6><i data-feather="shield-check" class="me-2"></i>Security Features Active</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="d-block">
+                                <i data-feather="check" class="me-1 text-success"></i>Unique secure token
+                            </small>
+                            <small class="d-block">
+                                <i data-feather="check" class="me-1 text-success"></i>File integrity verification
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="d-block">
+                                <i data-feather="check" class="me-1 text-success"></i>Download tracking
+                            </small>
+                            <small class="d-block">
+                                <i data-feather="check" class="me-1 text-success"></i>Expiration control
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('my_shares') }}" class="btn btn-primary">
+                        <i data-feather="list" class="me-2"></i>
+                        Manage All Shares
+                    </a>
+                    <a href="{{ url_for('documents') }}" class="btn btn-outline-secondary">
+                        <i data-feather="arrow-left" class="me-2"></i>
+                        Back to Documents
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="card mt-4 border-0">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i data-feather="info" class="me-2 text-info"></i>
+                    Next Steps
+                </h6>
+                <ol class="mb-0">
+                    <li>Copy the share URL above</li>
+                    <li>Send it to {{ share_link.shared_with_email }} via secure communication</li>
+                    <li>The recipient can download the file using the URL</li>
+                    <li>Monitor download activity in "Manage All Shares"</li>
+                    <li>Revoke access anytime if needed</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyToClipboard() {
+        const shareUrl = document.getElementById('shareUrl');
+        shareUrl.select();
+        shareUrl.setSelectionRange(0, 99999);
+        
+        try {
+            document.execCommand('copy');
+            
+            // Visual feedback
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i data-feather="check" class="me-1"></i>Copied!';
+            button.classList.remove('btn-outline-primary');
+            button.classList.add('btn-success');
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-primary');
+                feather.replace();
+            }, 2000);
+            
+        } catch (err) {
+            alert('Failed to copy URL. Please copy manually.');
+        }
+    }
+    
+    feather.replace();
+</script>
+{% endblock %}
