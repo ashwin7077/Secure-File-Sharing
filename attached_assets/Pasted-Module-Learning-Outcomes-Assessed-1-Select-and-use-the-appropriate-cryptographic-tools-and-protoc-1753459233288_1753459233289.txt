@@ -1,0 +1,58 @@
+Module Learning Outcomes Assessed:
+1. Select and use the appropriate cryptographic tools and protocols for common tasks
+2. Generate keys, signatures and certificates for interacting with services
+3. Create software that uses cryptographic primitives
+The ST6051CEM Coursework Component includes one element:
+1. Individual project report (100%)
+These make up 100% of the module mark.
+Project (100%)
+Design and develop a software application that uses Public Key Infrastructure (PKI) to
+verify the identity of users and securely sign documents. The application should
+ensure confidentiality, integrity, and authentication through the use of cryptographic
+primitives such as digital certificates, digital signatures, and asymmetric encryption.
+Requirements:
+1. User Authentication:
+Implement a secure user authentication system that uses digital certificates to verify
+the identity of users. The system should:
+• Allow users to register by generating a key pair (public and private keys).
+• Issue a digital certificate for each user, which associates their public key with
+their identity.
+• Allow users to authenticate by proving possession of their private key and
+validating the certificate against a certificate authority (CA).
+2. Document Signing and Verification:
+• Implement functionality for users to sign documents using their private key.
+• Implement functionality to verify the authenticity of a signed document using
+the public key associated with the signer’s certificate.
+3. Security Features:
+• Ensure that the system guarantees the confidentiality of sensitive data during
+transmission using encryption.
+• Demonstrate how the system ensures data integrity by verifying that
+documents have not been altered during transmission.
+• Provide authentication of both users and signed documents, ensuring only
+legitimate users can sign and verify documents.
+4. Key Management:
+• Discuss how key management is handled within your application, including key
+generation, storage, and revocation. How does the system ensure secure
+management of user keys and certificates?
+5. Use Case Application:
+• Using the features of your authentication system, design a real-world use case
+where this application could be applied. Some possible examples include:
+o Secure email communication
+o Document signing for legal or business transactions
+o Secure access to government or corporate services
+o Secure banking or financial transactions
+o Blockchain and cryptocurrency authentication
+o Healthcare systems and patient records
+o Secure file sharing in business environments
+• You are required to create and explain your own use case, how the
+cryptographic features in your system (such as PKI, digital signatures, and
+encryption) solve real-world problems in that domain, and why they are crucial
+to its success.
+6. Testing and Validation:
+• Test your system by simulating multiple users signing and verifying documents.
+Demonstrate that the system prevents unauthorized users from signing
+documents and verifies signatures correctly.
+• Include test cases that simulate common attacks, such as man-in-the-middle
+attacks, certificate spoofing, etc., and explain how your system mitigates these
+risks.
+
