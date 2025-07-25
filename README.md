@@ -41,7 +41,7 @@ docker-compose up --build
 1. Install Python 3.11+
 2. Install dependencies:
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 3. Run the application:
