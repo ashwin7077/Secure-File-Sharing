@@ -85,3 +85,21 @@ class ShareLink(db.Model):
         return (self.is_active and 
                 not self.is_expired and 
                 self.download_count < self.max_downloads)
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    notification_type = db.Column(db.String(50), nullable=False)  # 'share', 'download', 'sign', 'system'
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Optional references
+    document_id = db.Column(db.Integer, db.ForeignKey('document.id'), nullable=True)
+    share_link_id = db.Column(db.Integer, db.ForeignKey('share_link.id'), nullable=True)
+    
+    # Relationships
+    user = db.relationship('User', backref='notifications')
+    document = db.relationship('Document', backref='notifications')
+    share_link = db.relationship('ShareLink', backref='notifications')

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - PKI File Sharing System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i data-feather="bell" class="me-2"></i>
+                Notifications
+            </h2>
+            <span class="badge bg-primary">{{ notifications|selectattr('is_read', 'equalto', False)|list|length }} unread</span>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i data-feather="inbox" class="me-2"></i>
+                        Activity Center
+                    </h5>
+                    <small class="text-muted">{{ notifications|length }} total notifications</small>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if notifications %}
+                    <div class="list-group list-group-flush">
+                        {% for notification in notifications %}
+                        <div class="list-group-item {% if not notification.is_read %}bg-light{% endif %} border-0">
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-2">
+                                        {% if notification.notification_type == 'share' %}
+                                            <i data-feather="share-2" class="me-2 text-success"></i>
+                                        {% elif notification.notification_type == 'download' %}
+                                            <i data-feather="download" class="me-2 text-primary"></i>
+                                        {% elif notification.notification_type == 'sign' %}
+                                            <i data-feather="edit-3" class="me-2 text-info"></i>
+                                        {% else %}
+                                            <i data-feather="bell" class="me-2 text-secondary"></i>
+                                        {% endif %}
+                                        
+                                        <h6 class="mb-0 {% if not notification.is_read %}fw-bold{% endif %}">
+                                            {{ notification.title }}
+                                        </h6>
+                                        
+                                        {% if not notification.is_read %}
+                                            <span class="badge bg-primary ms-2">New</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <p class="mb-2 text-muted">{{ notification.message }}</p>
+                                    
+                                    <div class="d-flex align-items-center text-muted small">
+                                        <i data-feather="clock" class="me-1" style="width: 14px; height: 14px;"></i>
+                                        {{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                        
+                                        {% if notification.document %}
+                                            <span class="mx-2">•</span>
+                                            <i data-feather="file-text" class="me-1" style="width: 14px; height: 14px;"></i>
+                                            {{ notification.document.original_filename }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="ms-3">
+                                    {% if notification.notification_type == 'share' and notification.document %}
+                                        {% if notification.document.owner_id == current_user.id %}
+                                            <a href="{{ url_for('my_shares') }}" class="btn btn-sm btn-outline-primary">
+                                                <i data-feather="external-link" class="me-1"></i>Manage
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('documents') }}" class="btn btn-sm btn-outline-success">
+                                                <i data-feather="eye" class="me-1"></i>View
+                                            </a>
+                                        {% endif %}
+                                    {% elif notification.notification_type in ['download', 'sign'] and notification.document %}
+                                        <a href="{{ url_for('verify_document', doc_id=notification.document.id) }}" class="btn btn-sm btn-outline-info">
+                                            <i data-feather="shield-check" class="me-1"></i>Verify
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i data-feather="bell" class="text-muted mb-3" style="width: 64px; height: 64px;"></i>
+                        <h5 class="text-muted">No notifications yet</h5>
+                        <p class="text-muted">Activity notifications will appear here when you share, sign, or download documents.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter/Stats -->
+{% if notifications %}
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white border-0">
+            <div class="card-body text-center">
+                <h3>{{ notifications|selectattr('notification_type', 'equalto', 'share')|list|length }}</h3>
+                <p class="mb-0">Share Events</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white border-0">
+            <div class="card-body text-center">
+                <h3>{{ notifications|selectattr('notification_type', 'equalto', 'download')|list|length }}</h3>
+                <p class="mb-0">Downloads</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white border-0">
+            <div class="card-body text-center">
+                <h3>{{ notifications|selectattr('notification_type', 'equalto', 'sign')|list|length }}</h3>
+                <p class="mb-0">Signatures</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark border-0">
+            <div class="card-body text-center">
+                <h3>{{ notifications|selectattr('is_read', 'equalto', False)|list|length }}</h3>
+                <p class="mb-0">Unread</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Help -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i data-feather="help-circle" class="me-2 text-info"></i>
+                    Notification Types
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="share-2" class="me-2 text-success"></i>
+                            <small><strong>Share:</strong> When documents are shared with you or by you</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="download" class="me-2 text-primary"></i>
+                            <small><strong>Download:</strong> When your shared documents are downloaded</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="edit-3" class="me-2 text-info"></i>
+                            <small><strong>Sign:</strong> When your documents are digitally signed</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="bell" class="me-2 text-secondary"></i>
+                            <small><strong>System:</strong> Important system updates and security alerts</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    feather.replace();
+    
+    // Auto-refresh notifications every minute
+    setInterval(function() {
+        window.location.reload();
+    }, 60000);
+</script>
+{% endblock %}

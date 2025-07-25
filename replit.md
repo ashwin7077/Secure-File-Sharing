@@ -9,8 +9,11 @@ This is a Flask-based web application that implements a Public Key Infrastructur
 - **Added Secure Document Sharing System**: Users can now share documents with specific recipients through unique, time-limited URLs
 - **Implemented Share Management**: Created comprehensive share link management with expiration, download limits, and revocation
 - **Enhanced Security**: Added file integrity verification before each shared download
+- **Restricted Access Control**: Only document owners and specific recipients can view/access shared documents
+- **Disabled Direct Downloads**: All downloads now require secure share links with proper recipient verification
+- **Notification System**: Real-time notifications for sharing, downloads, and digital signatures with activity tracking
 - **Cross-platform Docker Support**: Created Docker Compose configuration with Windows batch files for easy deployment
-- **Database Enhancement**: Added ShareLink model for tracking document sharing with SQLite file-based storage
+- **Database Enhancement**: Added ShareLink and Notification models for comprehensive activity tracking
 
 ## User Preferences
 
@@ -44,6 +47,8 @@ The application follows a traditional Flask web application architecture with th
 - **User**: Stores user credentials, RSA key pairs, and X.509 certificates
 - **Document**: Manages uploaded files with integrity hashes and metadata
 - **DocumentSignature**: Tracks digital signatures with cryptographic verification data
+- **ShareLink**: Manages secure document sharing with time limits, download tracking, and access control
+- **Notification**: Real-time activity notifications for sharing, downloads, signatures, and system events
 
 ### Cryptographic Module (crypto_utils.py)
 - **PKIManager**: Handles RSA key generation, certificate creation, and digital signature operations

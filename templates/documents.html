@@ -78,7 +78,10 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <i data-feather="user" class="me-2 text-muted"></i>
-                                            {{ doc.owner.username }}
+                                            <span>{{ doc.owner.username }}</span>
+                                            {% if doc.owner_id != current_user.id %}
+                                                <span class="badge bg-info ms-2">Shared</span>
+                                            {% endif %}
                                         </div>
                                     </td>
                                     <td>{{ doc.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>

@@ -7,7 +7,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from app import app, db
-from models import User, Document, DocumentSignature, CertificateAuthority, ShareLink
+from models import User, Document, DocumentSignature, CertificateAuthority, ShareLink, Notification
 from crypto_utils import PKIManager
 import logging
 
@@ -183,9 +183,24 @@ def upload():
 @login_required
 def documents():
     try:
-        # Get all documents (for demonstration - in production, implement proper access control)
-        documents = Document.query.order_by(Document.uploaded_at.desc()).all()
-        return render_template('documents.html', documents=documents)
+        # Get documents user has access to: owned documents + documents shared with user
+        owned_documents = Document.query.filter_by(owner_id=current_user.id).order_by(Document.uploaded_at.desc()).all()
+        
+        # Get documents shared with current user (via active share links)
+        shared_document_ids = db.session.query(ShareLink.document_id).filter(
+            ShareLink.shared_with_email == current_user.email,
+            ShareLink.is_active == True,
+            ShareLink.expires_at > datetime.utcnow()
+        ).subquery()
+        
+        shared_documents = Document.query.filter(
+            Document.id.in_(shared_document_ids)
+        ).order_by(Document.uploaded_at.desc()).all()
+        
+        # Combine and remove duplicates
+        all_documents = owned_documents + [doc for doc in shared_documents if doc not in owned_documents]
+        
+        return render_template('documents.html', documents=all_documents)
     except Exception as e:
         logger.error(f"Documents listing error: {str(e)}")
         flash('An error occurred loading documents.', 'error')
@@ -203,6 +218,21 @@ def download(doc_id):
 def sign_document(doc_id):
     try:
         document = Document.query.get_or_404(doc_id)
+        
+        # Check if user has access to this document
+        has_access = (
+            document.owner_id == current_user.id or  # User owns the document
+            ShareLink.query.filter(
+                ShareLink.document_id == doc_id,
+                ShareLink.shared_with_email == current_user.email,
+                ShareLink.is_active == True,
+                ShareLink.expires_at > datetime.utcnow()
+            ).first() is not None  # Document is shared with user
+        )
+        
+        if not has_access:
+            flash('You do not have access to this document.', 'error')
+            return redirect(url_for('documents'))
         
         # Check if user already signed this document
         existing_signature = DocumentSignature.query.filter_by(
@@ -231,6 +261,18 @@ def sign_document(doc_id):
         )
         
         db.session.add(doc_signature)
+        
+        # Create notification for document owner
+        if document.owner_id != current_user.id:
+            sign_notification = Notification(
+                user_id=document.owner_id,
+                title="Document Digitally Signed",
+                message=f"{current_user.username} signed your document '{document.original_filename}'",
+                notification_type="sign",
+                document_id=doc_id
+            )
+            db.session.add(sign_notification)
+        
         db.session.commit()
         
         flash('Document signed successfully!', 'success')
@@ -246,6 +288,22 @@ def sign_document(doc_id):
 def verify_document(doc_id):
     try:
         document = Document.query.get_or_404(doc_id)
+        
+        # Check if user has access to this document
+        has_access = (
+            document.owner_id == current_user.id or  # User owns the document
+            ShareLink.query.filter(
+                ShareLink.document_id == doc_id,
+                ShareLink.shared_with_email == current_user.email,
+                ShareLink.is_active == True,
+                ShareLink.expires_at > datetime.utcnow()
+            ).first() is not None  # Document is shared with user
+        )
+        
+        if not has_access:
+            flash('You do not have access to this document.', 'error')
+            return redirect(url_for('documents'))
+        
         signatures = DocumentSignature.query.filter_by(document_id=doc_id).all()
         
         verification_results = []
@@ -331,6 +389,31 @@ def share_document(doc_id):
             )
             
             db.session.add(share_link)
+            
+            # Create notification for sender
+            sender_notification = Notification(
+                user_id=current_user.id,
+                title="Document Shared Successfully",
+                message=f"You shared '{document.original_filename}' with {email}",
+                notification_type="share",
+                document_id=doc_id,
+                share_link_id=share_link.id
+            )
+            db.session.add(sender_notification)
+            
+            # Try to find recipient user and create notification
+            recipient_user = User.query.filter_by(email=email).first()
+            if recipient_user:
+                recipient_notification = Notification(
+                    user_id=recipient_user.id,
+                    title="New Document Shared With You",
+                    message=f"{current_user.username} shared '{document.original_filename}' with you",
+                    notification_type="share",
+                    document_id=doc_id,
+                    share_link_id=share_link.id
+                )
+                db.session.add(recipient_notification)
+            
             db.session.commit()
             
             # Generate share URL
@@ -396,6 +479,17 @@ def process_shared_download(token):
         
         # Increment download count
         share_link.download_count += 1
+        
+        # Create download notification for owner
+        download_notification = Notification(
+            user_id=share_link.shared_by_id,
+            title="Document Downloaded",
+            message=f"'{share_link.document.original_filename}' was downloaded via shared link",
+            notification_type="download",
+            document_id=share_link.document_id,
+            share_link_id=share_link.id
+        )
+        db.session.add(download_notification)
         db.session.commit()
         
         document = share_link.document
@@ -444,6 +538,55 @@ def revoke_share(share_id):
         flash('An error occurred while revoking the share link.', 'error')
     
     return redirect(url_for('my_shares'))
+
+@app.route('/notifications')
+@login_required
+def notifications():
+    try:
+        # Get all notifications for current user
+        notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.created_at.desc()).all()
+        
+        # Mark notifications as read when viewed
+        unread_notifications = [n for n in notifications if not n.is_read]
+        for notification in unread_notifications:
+            notification.is_read = True
+        
+        if unread_notifications:
+            db.session.commit()
+        
+        return render_template('notifications.html', notifications=notifications)
+    except Exception as e:
+        logger.error(f"Notifications error: {str(e)}")
+        flash('An error occurred loading notifications.', 'error')
+        return render_template('notifications.html', notifications=[])
+
+@app.route('/notifications/count')
+@login_required
+def notification_count():
+    try:
+        count = Notification.query.filter_by(user_id=current_user.id, is_read=False).count()
+        return jsonify({'count': count})
+    except Exception as e:
+        logger.error(f"Notification count error: {str(e)}")
+        return jsonify({'count': 0})
+
+@app.route('/mark-notification-read/<int:notification_id>', methods=['POST'])
+@login_required
+def mark_notification_read(notification_id):
+    try:
+        notification = Notification.query.get_or_404(notification_id)
+        
+        # Check if user owns the notification
+        if notification.user_id != current_user.id:
+            abort(403)
+        
+        notification.is_read = True
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Mark notification read error: {str(e)}")
+        return jsonify({'success': False})
 
 @app.route('/certificate/<int:user_id>')
 @login_required

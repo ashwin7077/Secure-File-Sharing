@@ -50,6 +50,12 @@
                                 <i data-feather="share-2" class="me-1"></i>My Shares
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('notifications') }}" id="notifications-link">
+                                <i data-feather="bell" class="me-1"></i>Notifications
+                                <span class="badge bg-danger ms-1" id="notification-badge" style="display: none;"></span>
+                            </a>
+                        </li>
                     {% endif %}
                 </ul>
                 
@@ -137,6 +143,26 @@
     <!-- Initialize Feather Icons -->
     <script>
         feather.replace();
+        
+        // Update notification count
+        function updateNotificationCount() {
+            fetch('{{ url_for("notification_count") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notification-badge');
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(error => console.log('Notification count error:', error));
+        }
+        
+        // Update count on page load and every 30 seconds
+        updateNotificationCount();
+        setInterval(updateNotificationCount, 30000);
     </script>
     
     {% block scripts %}{% endblock %}
