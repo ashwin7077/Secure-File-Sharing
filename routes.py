@@ -194,25 +194,9 @@ def documents():
 @app.route('/download/<int:doc_id>')
 @login_required
 def download(doc_id):
-    try:
-        document = Document.query.get_or_404(doc_id)
-        
-        # Verify file integrity
-        current_hash = PKIManager.calculate_file_hash(document.file_path)
-        if current_hash != document.file_hash:
-            flash('File integrity check failed. File may have been tampered with.', 'error')
-            return redirect(url_for('documents'))
-        
-        return send_file(
-            document.file_path,
-            as_attachment=True,
-            download_name=document.original_filename,
-            mimetype=document.content_type
-        )
-    except Exception as e:
-        logger.error(f"Download error: {str(e)}")
-        flash('An error occurred during file download.', 'error')
-        return redirect(url_for('documents'))
+    # Block direct downloads - only allow through shared links
+    flash('Direct downloads are disabled. Please use shared links to download documents.', 'warning')
+    return redirect(url_for('documents'))
 
 @app.route('/sign/<int:doc_id>', methods=['POST'])
 @login_required
