@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document - PKI File Sharing System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h3 class="mb-0">
+                    <i data-feather="upload" class="me-2"></i>
+                    Upload Document
+                </h3>
+                <p class="mb-0 mt-2 opacity-75">Securely upload and store your documents</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="mb-4">
+                        <label for="file" class="form-label">
+                            <i data-feather="file" class="me-1"></i>Select Document
+                        </label>
+                        <input type="file" class="form-control" id="file" name="file" required>
+                        <div class="form-text">
+                            Maximum file size: 16MB. All file types supported.
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info border-0" role="alert">
+                        <i data-feather="info" class="me-2"></i>
+                        <strong>What happens after upload:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>File integrity hash (SHA-256) will be calculated</li>
+                            <li>Document will be stored securely</li>
+                            <li>You can digitally sign the document</li>
+                            <li>Others can verify document authenticity</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
+                            <i data-feather="upload-cloud" class="me-2"></i>
+                            Upload Document
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Upload Progress -->
+        <div class="card mt-4 border-0" id="progressCard" style="display: none;">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i data-feather="clock" class="me-2 text-info"></i>
+                    Processing Upload
+                </h6>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 100%"></div>
+                </div>
+                <small class="text-muted mt-2 d-block">
+                    Calculating file hash and storing securely...
+                </small>
+            </div>
+        </div>
+        
+        <!-- Security Features -->
+        <div class="card mt-4 border-0">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i data-feather="shield-check" class="me-2 text-success"></i>
+                    Security Features
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="hash" class="me-2 text-primary"></i>
+                            <small>SHA-256 Integrity Hash</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="lock" class="me-2 text-warning"></i>
+                            <small>Secure File Storage</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="edit-3" class="me-2 text-success"></i>
+                            <small>Digital Signature Ready</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="eye" class="me-2 text-info"></i>
+                            <small>Audit Trail Enabled</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- File Type Information -->
+        <div class="card mt-4 border-0">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i data-feather="file-text" class="me-2 text-info"></i>
+                    Supported File Types
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i data-feather="file-text" class="me-1"></i>Documents: PDF, DOC, DOCX<br>
+                            <i data-feather="image" class="me-1"></i>Images: JPG, PNG, GIF<br>
+                            <i data-feather="file" class="me-1"></i>Archives: ZIP, RAR
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i data-feather="code" class="me-1"></i>Code: JS, PY, HTML, CSS<br>
+                            <i data-feather="bar-chart" class="me-1"></i>Data: CSV, JSON, XML<br>
+                            <i data-feather="file-text" class="me-1"></i>Text: TXT, MD
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+        document.getElementById('uploadBtn').disabled = true;
+        document.getElementById('uploadBtn').innerHTML = '<i data-feather="clock" class="me-2"></i>Processing...';
+        document.getElementById('progressCard').style.display = 'block';
+        feather.replace();
+    });
+    
+    // File size validation
+    document.getElementById('file').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file && file.size > 16 * 1024 * 1024) { // 16MB
+            alert('File size exceeds 16MB limit. Please choose a smaller file.');
+            this.value = '';
+        }
+    });
+    
+    feather.replace();
+</script>
+{% endblock %}

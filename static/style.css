@@ -1,0 +1,224 @@
+/* Custom styles for PKI File Sharing System */
+
+:root {
+    --pki-primary: #0d6efd;
+    --pki-success: #198754;
+    --pki-danger: #dc3545;
+    --pki-warning: #ffc107;
+    --pki-info: #0dcaf0;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(25, 135, 84, 0.1) 100%);
+    border-radius: 15px;
+    margin-bottom: 2rem;
+}
+
+/* Custom Card Shadows */
+.card {
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* File Upload Area */
+.upload-area {
+    border: 2px dashed var(--bs-border-color);
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    transition: border-color 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: var(--pki-primary);
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Progress Bar Animation */
+.progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+/* Certificate Display */
+.certificate-info {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    background-color: var(--bs-gray-100);
+    border-radius: 5px;
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+/* Signature Status Badges */
+.signature-valid {
+    background-color: var(--pki-success) !important;
+}
+
+.signature-invalid {
+    background-color: var(--pki-danger) !important;
+}
+
+.signature-pending {
+    background-color: var(--pki-warning) !important;
+    color: #000 !important;
+}
+
+/* Document Icons */
+.document-icon {
+    width: 24px;
+    height: 24px;
+}
+
+/* Security Features Grid */
+.security-feature {
+    padding: 1.5rem;
+    text-align: center;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.security-feature:hover {
+    transform: translateY(-5px);
+}
+
+/* Table Enhancements */
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: var(--bs-primary);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Button Enhancements */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Alert Enhancements */
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 1rem !important;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Dark theme specific adjustments */
+[data-bs-theme="dark"] .certificate-info {
+    background-color: var(--bs-gray-800);
+    color: var(--bs-gray-100);
+}
+
+[data-bs-theme="dark"] .upload-area:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* File type icons color coding */
+.file-icon-pdf { color: #dc3545; }
+.file-icon-image { color: #0dcaf0; }
+.file-icon-text { color: #198754; }
+.file-icon-code { color: #fd7e14; }
+.file-icon-archive { color: #6f42c1; }
+.file-icon-default { color: #6c757d; }
+
+/* Verification status indicators */
+.verification-success {
+    border-left: 4px solid var(--pki-success);
+}
+
+.verification-failure {
+    border-left: 4px solid var(--pki-danger);
+}
+
+.verification-warning {
+    border-left: 4px solid var(--pki-warning);
+}
+
+/* Breadcrumb styling */
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: var(--bs-secondary);
+}
+
+/* Feather icon alignments */
+[data-feather] {
+    vertical-align: middle;
+}
+
+/* Custom scrollbar for code/certificate displays */
+.certificate-info::-webkit-scrollbar {
+    height: 8px;
+}
+
+.certificate-info::-webkit-scrollbar-track {
+    background: var(--bs-gray-200);
+    border-radius: 4px;
+}
+
+.certificate-info::-webkit-scrollbar-thumb {
+    background: var(--bs-gray-400);
+    border-radius: 4px;
+}
+
+.certificate-info::-webkit-scrollbar-thumb:hover {
+    background: var(--bs-gray-500);
+}
+
+/* Print styles */
+@media print {
+    .btn, .navbar, .breadcrumb {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+    }
+}

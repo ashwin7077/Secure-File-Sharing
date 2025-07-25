@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}All Documents - PKI File Sharing System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i data-feather="file-text" class="me-2"></i>
+                All Documents
+            </h2>
+            <a href="{{ url_for('upload') }}" class="btn btn-primary">
+                <i data-feather="upload" class="me-2"></i>Upload Document
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i data-feather="folder" class="me-2"></i>
+                        Document Repository
+                    </h5>
+                    <span class="badge bg-primary">{{ documents|length }} documents</span>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if documents %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th><i data-feather="file" class="me-1"></i> Document</th>
+                                    <th><i data-feather="user" class="me-1"></i> Owner</th>
+                                    <th><i data-feather="calendar" class="me-1"></i> Uploaded</th>
+                                    <th><i data-feather="hard-drive" class="me-1"></i> Size</th>
+                                    <th><i data-feather="edit-3" class="me-1"></i> Signatures</th>
+                                    <th><i data-feather="settings" class="me-1"></i> Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in documents %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if doc.content_type %}
+                                                {% if 'image' in doc.content_type %}
+                                                    <i data-feather="image" class="me-2 text-primary"></i>
+                                                {% elif 'pdf' in doc.content_type %}
+                                                    <i data-feather="file-text" class="me-2 text-danger"></i>
+                                                {% elif 'text' in doc.content_type %}
+                                                    <i data-feather="file-text" class="me-2 text-info"></i>
+                                                {% else %}
+                                                    <i data-feather="file" class="me-2 text-muted"></i>
+                                                {% endif %}
+                                            {% else %}
+                                                <i data-feather="file" class="me-2 text-muted"></i>
+                                            {% endif %}
+                                            <div>
+                                                <span class="fw-medium">{{ doc.original_filename }}</span>
+                                                {% if doc.content_type %}
+                                                    <br><small class="text-muted">{{ doc.content_type }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i data-feather="user" class="me-2 text-muted"></i>
+                                            {{ doc.owner.username }}
+                                        </div>
+                                    </td>
+                                    <td>{{ doc.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ "%.2f"|format(doc.file_size / 1024) }} KB</td>
+                                    <td>
+                                        {% if doc.signatures %}
+                                            <span class="badge bg-success">
+                                                <i data-feather="check-circle" class="me-1"></i>
+                                                {{ doc.signatures|length }} signature(s)
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i data-feather="minus-circle" class="me-1"></i>
+                                                Unsigned
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('download', doc_id=doc.id) }}" 
+                                               class="btn btn-outline-primary" title="Download">
+                                                <i data-feather="download"></i>
+                                            </a>
+                                            
+                                            {% if current_user.id != doc.owner_id %}
+                                                {% set user_signed = doc.signatures|selectattr('signer_id', 'equalto', current_user.id)|list %}
+                                                {% if not user_signed %}
+                                                    <form method="POST" action="{{ url_for('sign_document', doc_id=doc.id) }}" class="d-inline">
+                                                        <button type="submit" class="btn btn-outline-success" 
+                                                                title="Sign Document"
+                                                                onclick="return confirm('Are you sure you want to digitally sign this document?')">
+                                                            <i data-feather="edit-3"></i>
+                                                        </button>
+                                                    </form>
+                                                {% else %}
+                                                    <button class="btn btn-success" title="Already Signed" disabled>
+                                                        <i data-feather="check"></i>
+                                                    </button>
+                                                {% endif %}
+                                            {% endif %}
+                                            
+                                            <a href="{{ url_for('verify_document', doc_id=doc.id) }}" 
+                                               class="btn btn-outline-info" title="Verify Signatures">
+                                                <i data-feather="shield-check"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i data-feather="folder" class="text-muted mb-3" style="width: 64px; height: 64px;"></i>
+                        <h5 class="text-muted">No documents available</h5>
+                        <p class="text-muted">Be the first to upload a document to the repository.</p>
+                        <a href="{{ url_for('upload') }}" class="btn btn-primary">
+                            <i data-feather="upload" class="me-2"></i>Upload First Document
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i data-feather="info" class="me-2 text-info"></i>
+                    Actions Guide
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="download" class="me-2 text-primary"></i>
+                            <small><strong>Download:</strong> Download the document file</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="edit-3" class="me-2 text-success"></i>
+                            <small><strong>Sign:</strong> Digitally sign the document with your private key</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="shield-check" class="me-2 text-info"></i>
+                            <small><strong>Verify:</strong> Verify document signatures and integrity</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <i data-feather="check" class="me-2 text-success"></i>
+                            <small><strong>Signed:</strong> You have already signed this document</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    feather.replace();
+</script>
+{% endblock %}

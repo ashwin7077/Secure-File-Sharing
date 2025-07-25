@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Register - PKI File Sharing System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h3 class="mb-0">
+                    <i data-feather="user-plus" class="me-2"></i>
+                    Create Account
+                </h3>
+                <p class="mb-0 mt-2 opacity-75">Generate your digital identity</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i data-feather="user" class="me-1"></i>Username
+                        </label>
+                        <input type="text" class="form-control" id="username" name="username" required 
+                               placeholder="Enter your username" value="{{ request.form.username or '' }}">
+                        <div class="form-text">This will be used in your digital certificate.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <i data-feather="mail" class="me-1"></i>Email Address
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email" required 
+                               placeholder="Enter your email" value="{{ request.form.email or '' }}">
+                        <div class="form-text">Will be included in your X.509 certificate.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i data-feather="lock" class="me-1"></i>Password
+                        </label>
+                        <input type="password" class="form-control" id="password" name="password" required 
+                               placeholder="Enter a strong password">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="confirm_password" class="form-label">
+                            <i data-feather="lock" class="me-1"></i>Confirm Password
+                        </label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required 
+                               placeholder="Confirm your password">
+                    </div>
+                    
+                    <div class="alert alert-info border-0" role="alert">
+                        <i data-feather="info" class="me-2"></i>
+                        <strong>What happens during registration:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>RSA key pair (2048-bit) will be generated</li>
+                            <li>X.509 digital certificate will be created</li>
+                            <li>Your identity will be cryptographically verified</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i data-feather="shield" class="me-2"></i>
+                            Create Secure Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center bg-light">
+                <p class="mb-0">
+                    Already have an account? 
+                    <a href="{{ url_for('login') }}" class="text-primary text-decoration-none">
+                        <i data-feather="log-in" class="me-1"></i>Sign In
+                    </a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Security Information -->
+        <div class="card mt-4 border-0">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i data-feather="shield-check" class="me-2 text-success"></i>
+                    Security Features
+                </h6>
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">
+                            <i data-feather="key" class="me-1"></i>2048-bit RSA Keys<br>
+                            <i data-feather="award" class="me-1"></i>X.509 Certificates
+                        </small>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">
+                            <i data-feather="hash" class="me-1"></i>SHA-256 Hashing<br>
+                            <i data-feather="lock" class="me-1"></i>Secure Storage
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Password confirmation validation
+    document.getElementById('confirm_password').addEventListener('input', function() {
+        const password = document.getElementById('password').value;
+        const confirmPassword = this.value;
+        
+        if (password !== confirmPassword) {
+            this.setCustomValidity('Passwords do not match');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    feather.replace();
+</script>
+{% endblock %}

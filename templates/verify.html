@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Document - PKI File Sharing System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('documents') }}">Documents</a></li>
+                <li class="breadcrumb-item active">Verify</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i data-feather="shield-check" class="me-2"></i>
+                Document Verification
+            </h2>
+            <a href="{{ url_for('documents') }}" class="btn btn-secondary">
+                <i data-feather="arrow-left" class="me-2"></i>Back to Documents
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Document Information -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i data-feather="file-text" class="me-2"></i>
+                    Document Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Filename:</strong> {{ document.original_filename }}</p>
+                        <p><strong>Owner:</strong> {{ document.owner.username }}</p>
+                        <p><strong>Uploaded:</strong> {{ document.uploaded_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Size:</strong> {{ "%.2f"|format(document.file_size / 1024) }} KB</p>
+                        <p><strong>Content Type:</strong> {{ document.content_type or 'Unknown' }}</p>
+                        <p><strong>File Integrity:</strong> 
+                            {% if file_integrity %}
+                                <span class="badge bg-success">
+                                    <i data-feather="check-circle" class="me-1"></i>Valid
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i data-feather="x-circle" class="me-1"></i>Compromised
+                                </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                {% if not file_integrity %}
+                    <div class="alert alert-danger border-0 mt-3">
+                        <i data-feather="alert-triangle" class="me-2"></i>
+                        <strong>Security Warning:</strong> The file integrity check failed. This document may have been tampered with or corrupted.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Signature Verification Results -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i data-feather="edit-3" class="me-2"></i>
+                    Digital Signatures
+                    {% if verification_results %}
+                        <span class="badge bg-light text-dark ms-2">{{ verification_results|length }}</span>
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if verification_results %}
+                    {% for result in verification_results %}
+                        <div class="card mb-3 {% if result.overall_valid %}border-success{% else %}border-danger{% endif %}">
+                            <div class="card-header {% if result.overall_valid %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i data-feather="user" class="me-2"></i>
+                                        Signature by {{ result.signer.username }}
+                                    </h6>
+                                    <span class="badge {% if result.overall_valid %}bg-light text-success{% else %}bg-light text-danger{% endif %}">
+                                        {% if result.overall_valid %}
+                                            <i data-feather="check-circle" class="me-1"></i>Valid
+                                        {% else %}
+                                            <i data-feather="x-circle" class="me-1"></i>Invalid
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Signature Details</h6>
+                                        <p><strong>Signed On:</strong> {{ result.signature.signed_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+                                        <p><strong>Algorithm:</strong> {{ result.signature.signature_algorithm }}</p>
+                                        <p><strong>Signer Email:</strong> {{ result.signer.email }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Verification Status</h6>
+                                        <div class="mb-2">
+                                            <strong>Signature Validity:</strong>
+                                            {% if result.is_valid_signature %}
+                                                <span class="badge bg-success">
+                                                    <i data-feather="check" class="me-1"></i>Valid
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                                    <i data-feather="x" class="me-1"></i>Invalid
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="mb-2">
+                                            <strong>Certificate Status:</strong>
+                                            {% if result.is_valid_cert %}
+                                                <span class="badge bg-success">
+                                                    <i data-feather="check" class="me-1"></i>Valid
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                                    <i data-feather="x" class="me-1"></i>Invalid
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div>
+                                            <strong>File Integrity:</strong>
+                                            {% if file_integrity %}
+                                                <span class="badge bg-success">
+                                                    <i data-feather="check" class="me-1"></i>Intact
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                                    <i data-feather="x" class="me-1"></i>Compromised
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if result.cert_message and result.cert_message != 'Certificate is valid' %}
+                                    <div class="alert alert-warning border-0 mt-3">
+                                        <i data-feather="alert-triangle" class="me-2"></i>
+                                        <strong>Certificate Issue:</strong> {{ result.cert_message }}
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="mt-3">
+                                    <a href="{{ url_for('view_certificate', user_id=result.signer.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i data-feather="award" class="me-1"></i>View Certificate
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i data-feather="edit-3" class="text-muted mb-3" style="width: 48px; height: 48px;"></i>
+                        <h5 class="text-muted">No Digital Signatures</h5>
+                        <p class="text-muted">This document has not been digitally signed by any users.</p>
+                        {% if current_user.id != document.owner_id %}
+                            <form method="POST" action="{{ url_for('sign_document', doc_id=document.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-success"
+                                        onclick="return confirm('Are you sure you want to digitally sign this document?')">
+                                    <i data-feather="edit-3" class="me-2"></i>Sign This Document
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Verification Summary -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i data-feather="clipboard" class="me-2"></i>
+                    Verification Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h3 class="{% if file_integrity %}text-success{% else %}text-danger{% endif %}">
+                                {% if file_integrity %}
+                                    <i data-feather="shield-check"></i>
+                                {% else %}
+                                    <i data-feather="shield-off"></i>
+                                {% endif %}
+                            </h3>
+                            <h6>File Integrity</h6>
+                            <p class="text-muted small">
+                                {% if file_integrity %}
+                                    Document hasn't been modified
+                                {% else %}
+                                    Document may be compromised
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h3 class="{% if verification_results %}text-info{% else %}text-muted{% endif %}">
+                                <i data-feather="users"></i>
+                            </h3>
+                            <h6>Total Signatures</h6>
+                            <p class="text-muted small">{{ verification_results|length }} digital signature(s)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            {% set valid_signatures = verification_results|selectattr('overall_valid')|list %}
+                            <h3 class="{% if valid_signatures %}text-success{% else %}text-warning{% endif %}">
+                                <i data-feather="check-circle"></i>
+                            </h3>
+                            <h6>Valid Signatures</h6>
+                            <p class="text-muted small">{{ valid_signatures|length }} of {{ verification_results|length }} valid</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="alert {% if file_integrity and (not verification_results or verification_results|selectattr('overall_valid')|list) %}alert-success{% else %}alert-warning{% endif %} border-0">
+                    <i data-feather="{% if file_integrity and (not verification_results or verification_results|selectattr('overall_valid')|list) %}check-circle{% else %}alert-triangle{% endif %}" class="me-2"></i>
+                    <strong>Overall Status:</strong>
+                    {% if file_integrity and (not verification_results or verification_results|selectattr('overall_valid')|list) %}
+                        This document appears to be authentic and has not been tampered with.
+                    {% else %}
+                        This document may have integrity issues or invalid signatures. Use with caution.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    feather.replace();
+</script>
+{% endblock %}

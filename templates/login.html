@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Login - PKI File Sharing System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow border-0">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h3 class="mb-0">
+                    <i data-feather="log-in" class="me-2"></i>
+                    Sign In
+                </h3>
+                <p class="mb-0 mt-2 opacity-75">Access your secure account</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i data-feather="user" class="me-1"></i>Username
+                        </label>
+                        <input type="text" class="form-control" id="username" name="username" required 
+                               placeholder="Enter your username" value="{{ request.form.username or '' }}">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label">
+                            <i data-feather="lock" class="me-1"></i>Password
+                        </label>
+                        <input type="password" class="form-control" id="password" name="password" required 
+                               placeholder="Enter your password">
+                    </div>
+                    
+                    <div class="alert alert-info border-0" role="alert">
+                        <i data-feather="shield" class="me-2"></i>
+                        <strong>Secure Authentication:</strong>
+                        Your digital certificate will be verified upon login.
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i data-feather="shield-check" class="me-2"></i>
+                            Authenticate
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center bg-light">
+                <p class="mb-0">
+                    Don't have an account? 
+                    <a href="{{ url_for('register') }}" class="text-primary text-decoration-none">
+                        <i data-feather="user-plus" class="me-1"></i>Create Account
+                    </a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Authentication Process -->
+        <div class="card mt-4 border-0">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i data-feather="info" class="me-2 text-info"></i>
+                    Authentication Process
+                </h6>
+                <div class="small text-muted">
+                    <div class="d-flex align-items-center mb-2">
+                        <i data-feather="check" class="me-2 text-success"></i>
+                        Password verification
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i data-feather="check" class="me-2 text-success"></i>
+                        Certificate validation
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i data-feather="check" class="me-2 text-success"></i>
+                        PKI identity verification
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    feather.replace();
+</script>
+{% endblock %}
